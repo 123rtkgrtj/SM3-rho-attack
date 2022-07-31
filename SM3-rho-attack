@@ -1,0 +1,167 @@
+import random
+iv='7380166f4914b2b9172442d7da8a0600a96f30bc163138aae38dee4db0fb0e4e'
+T=[]
+for i in range(0,16):
+    T.append('79cc4519')
+for i in range(0,48):
+    T.append('7a879d8a')
+def yihuo(a,b):#异或运算
+    c=''
+    for i in range(0,len(a)):
+        if a[i]==b[i]:
+            c=c+'0'
+        else:
+            c=c+'1'
+    return c
+def fei(a):#取反运算
+    c=''
+    for i in range(0,len(a)):
+        if a[i]=='1':
+            c=c+'0'
+        else:
+            c=c+'1'
+    return c
+def yu(a,b):#与运算
+    c=''
+    for i in range(0,len(a)):
+        if a[i]=='1' and b[i]=='1':
+            c=c+'1'
+        else:
+            c=c+'0'
+    return c
+def huo(a,b):#或运算
+    c=''
+    for i in range(0,len(a)):
+        if a[i]=='0' and b[i]=='0':
+            c=c+'0'
+        else:
+            c=c+'1'
+    return c
+def add32(a,b):#模加运算
+    c='0'
+    for i in range(0,31):
+        if int(a[31-i])+int(b[31-i])+int(c[0])>1:
+            c='1'+c
+        else:
+            c='0'+c
+    d=''
+    for i in range(0,32):
+        if (int(a[i])+int(b[i])+int(c[i]))%2==1:
+            d=d+'1'
+        else:
+            d=d+'0'
+    return d
+def sixteen_two(a):#十六进制转二进制
+    if a=='a':
+        b='1010'
+    elif a=='b':
+        b='1011'
+    elif a=='c':
+        b='1100'
+    elif a=='d':
+        b='1101'
+    elif a=='e':
+        b='1110'
+    elif a=='f':
+        b='1111'
+    else:      
+        b=bin(int(a))
+        b=str(b[2::])
+        if len(b)<4:
+            b='0'*(4-len(b))+b
+    return b
+def two_sixteen(a):#二进制转十六进制
+    C=''
+    for i in range(0,len(a)//4):
+        for j in '0123456789abcdef':
+            if sixteen_two(j)==a[4*i:4*i+4:]:
+                C=C+j
+    return C
+def alltwo(a):#字符串转二进制
+    b=''
+    for i in a:
+        b=b+sixteen_two(i)
+    return b
+def ls(a,b):#左移操作
+    c=''
+    c=a[b%len(a)::]+a[0:b%len(a):]
+    return c
+def tianchong(a):#消息填充
+    b=''
+    b=alltwo(a)
+    c=512-(len(b)+65)%512
+    d=''
+    d=b+'1'+'0'*c+bin(len(b))[2::].zfill(64)
+    return d
+def p1(a):#P1函数
+    return yihuo(a,yihuo(ls(a,15),ls(a,23)))
+def p0(a):#P0函数
+    return yihuo(a,yihuo(ls(a,9),ls(a,17)))
+def kuozhan(a):#消息扩展
+    w=[]
+    for i in range(0,16):
+        w.append(a[32*i:32*i+32:])
+    for i in range(0,52):
+        w.append(yihuo(yihuo(p1(yihuo(yihuo(w[i],w[i+7]),ls(w[i+13],15))),ls(w[i+3],7)),w[i+10]))
+    for i in range(0,64):
+        w.append(yihuo(w[i],w[i+4]))
+    #for i in range(0,132):
+     #   print(two_sixteen(w[i]),' ')
+    return w
+def ff(a,b,c,d):#FF函数
+    e=''
+    if d<16:
+        e=yihuo(yihuo(a,b),c)
+    else:
+        e=huo(huo(yu(a,b),yu(a,c)),yu(b,c))
+    return e
+def gg(a,b,c,d):#GG函数
+    e=''
+    if d<16:
+        e=yihuo(yihuo(a,b),c)
+    else:
+        e=huo(yu(a,b),yu(fei(a),c))
+    return e
+def yasuo(a,b):#压缩函数
+    A=a[0:32:]
+    B=a[32:64:]
+    C=a[64:96:]
+    D=a[96:128:]
+    E=a[128:160:]
+    F=a[160:192:]
+    G=a[192:224:]
+    H=a[224:256:]
+    w=kuozhan(b)
+    ss1=''
+    ss2=''
+    tt1=''
+    tt2=''
+    for i in range(0,64):
+        ss1=ls(add32(add32(ls(A,12),E),ls(alltwo(T[i]),i)),7)
+        ss2=yihuo(ss1,ls(A,12))
+        tt1=add32(add32(add32(ff(A,B,C,i),D),ss2),w[68+i])
+        tt2=add32(add32(add32(gg(E,F,G,i),H),ss1),w[i])
+        D=C
+        C=ls(B,9)
+        B=A
+        A=tt1
+        H=G
+        G=ls(F,19)
+        F=E
+        E=p0(tt2)
+    return yihuo(a,A+B+C+D+E+F+G+H)
+def sm3(a):#SM3加密
+    b=tianchong(a)
+    n=len(b)//512
+    iv_=iv
+    for i in range(0,n):
+        iv_=yasuo(alltwo(iv),b[512*i:512*i+512:])
+    return iv_
+a=[]
+b=''.join(random.sample(['0','1','2','3','4','5','6','7','8','9','a','b','c','d','e'],6))
+while b not in a:
+    a.append(b)
+    b=two_sixteen(sm3(b))[0:6:]    
+d=a.index(b)
+print(a[d-1],a[d])
+print(a[-1],b)

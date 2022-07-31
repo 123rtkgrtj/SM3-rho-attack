@@ -45,4 +45,9 @@
     发现这一对消息的哈希值的前24bit确实相等
     
     说明rho碰撞攻击成功
+    
+    同理，实现了28bit的碰撞
+    
+    ![image](https://user-images.githubusercontent.com/110152761/182011930-b8ef0646-cbae-4a32-9989-54c9a9c44d97.png)
+
 
